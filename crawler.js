@@ -1,23 +1,31 @@
-const axios = require('axios');
 const puppeteer = require('puppeteer');
 
 async function scrapeDynamicContent(url) {
-    const browser = await puppeteer.launch({ headless: false });
+    const browser = await puppeteer.launch({
+        headless: false,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
     const page = await browser.newPage();
+
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36');
+
     await page.goto(url, { waitUntil: 'networkidle2' });
 
     await page.waitForSelector('#sidoCd');
     await page.select('#sidoCd', '11');
+    await page.waitForTimeout(1000); 
+
+    await page.evaluate(() => sggList());
 
     await page.waitForSelector('#sggCd');
     await page.select('#sggCd', '성동구');
+    await page.waitForTimeout(1000);
 
     await page.waitForSelector('input.sch-btn');
     await page.click('input.sch-btn');
 
     await page.waitForSelector('table.table05', { timeout: 60000 });
 
-    // 데이터 추출하기
     const results = await page.evaluate(() => {
         const rows = Array.from(document.querySelectorAll('table.table05 tbody tr'));
         return rows.map(row => {
